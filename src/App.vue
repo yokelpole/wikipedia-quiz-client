@@ -16,12 +16,20 @@ export default {
 </script>
 
 <style>
+html {
+  background: black;
+  max-width: 768px;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  color: #c1d1e2;
   margin-top: 60px;
 }
 </style>

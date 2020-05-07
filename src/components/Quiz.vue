@@ -4,18 +4,23 @@
       <h1>THE GREAT WIKIPEDIA QUIZ</h1>
     </center>
     <div v-if="playerId === undefined">
-      <p>What is your name?</p>
       <form v-on:submit="submitName">
-        <input v-model="playerName" type="text" />
-        <input type="submit" />
+        <p>
+          <input v-model="playerName" type="text" placeholder="What is your name?" />
+        </p>
+        <p>
+          <input type="submit" value="Start the quiz!" />
+        </p>
       </form>
     </div>
     <div v-if="playerId">
       <h2>{{ activeQuestion.topic }}</h2>
       <h3>{{ activeQuestion.section }}</h3>
       <p>{{ activeQuestion.question }}</p>
-      <div v-for="(val) in activeQuestion.answers" v-bind:key="val">
-        <button v-on:click="submitAnswer(val)" :disabled="answer">{{ val }}</button>
+      <div class="button-wrapper" v-if="userIsCorrect === undefined">
+        <div class="button" v-for="(val) in activeQuestion.answers" v-bind:key="val">
+          <button v-on:click="submitAnswer(val)" :disabled="answer">{{ val }}</button>
+        </div>
       </div>
       <div>
         <h2 v-if="userIsCorrect === true">CORRECT!</h2>
@@ -28,7 +33,7 @@
         <h5>{{ countdownValue }}</h5>
       </div>
       <ul v-for="player in orderedScoreboard" v-bind:key="player.id">
-        <li>{{ player.name }} {{ player.score }}</li>
+        <li>{{ player.name }} {{ player.score }} {{ answerIndicator(player.answered_correctly) }}</li>
       </ul>
     </div>
   </div>
@@ -80,8 +85,13 @@ export default {
         setQuestion(data.value.question);
         startCountdownTimer(data.value.finish_time);
       }
-      if (data.type === "player_registered") this.playerId = data.value;
-      if (data.type === "leaderboard_updated") this.players = data.value;
+      if (data.type === "player_registered" && !this.playerId) {
+        if (data.value.name === this.playerName) this.playerId = data.value.player_id;
+      }
+      if (data.type === "leaderboard_updated") {
+        this.players = data.value;
+        console.log(this.players);
+      }
       if (data.type === "correct_answer") {
         this.correctAnswer = data.value;
         this.userIsCorrect = this.correctAnswer === this.answer;
@@ -102,6 +112,7 @@ export default {
     },
     submitAnswer: async function(index) {
       this.answer = index;
+      console.log(`### SENDING PLAYERID ${this.playerId}`);
       await this.websocket.send(
         JSON.stringify({
           type: "player_answer",
@@ -112,12 +123,41 @@ export default {
         })
       );
     },
+    answerIndicator: function(answeredCorrectly) {
+      if (answeredCorrectly === null) return;
+
+      return answeredCorrectly
+        ? '✅'
+        : '❌';
+    }
   },
   computed: {
-    orderedScoreboard: function () {
+    orderedScoreboard: function() {
       const playerMap = Object.entries(this.players).map(([, val]) => val);
       return playerMap.sort((a, b) => b.score > a.score);
-    }
+    },
   }
 };
 </script>
+
+<style scoped>
+  button {
+    height: 100%;
+    min-height: 125px;
+    max-height: 200px;
+    width: 100%;
+    padding: 10px;
+  }
+
+  .button {
+    margin: 10px;
+  }
+
+  .button-wrapper {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 1fr;
+    grid-column-gap: 10px;
+    grid-row-gap: 10px;
+  }
+</style>
