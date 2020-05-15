@@ -94,7 +94,6 @@ export default {
       }
       if (data.type === "leaderboard_updated") {
         this.players = data.value;
-        console.log(this.players);
       }
       if (data.type === "correct_answer") {
         this.correctAnswer = data.value;
@@ -118,7 +117,6 @@ export default {
     },
     submitAnswer: async function(index) {
       this.answer = index;
-      console.log(`### SENDING PLAYERID ${this.playerId}`);
       await this.websocket.send(
         JSON.stringify({
           type: "player_answer",
