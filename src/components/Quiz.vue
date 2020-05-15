@@ -17,20 +17,22 @@
       <h2>{{ activeQuestion.topic }}</h2>
       <h3>{{ activeQuestion.section }}</h3>
       <p>{{ activeQuestion.question }}</p>
-      <div class="button-wrapper" v-if="userIsCorrect === undefined">
+      <div class="button-wrapper">
         <div class="button" v-for="(val) in activeQuestion.answers" v-bind:key="val">
-          <button v-on:click="submitAnswer(val)" :disabled="answer">{{ val }}</button>
+          <button v-on:click="submitAnswer(val)" :disabled="answer || countdownValue <= 0">{{ val }}</button>
         </div>
       </div>
       <div>
         <h2 v-if="userIsCorrect === true">CORRECT!</h2>
         <div v-if="userIsCorrect === false">
           <h2>WRONG!</h2>
+        </div>
+        <div v-if="userIsCorrect === false || answer === undefined && countdownValue <= 0">
           <p>The correct answer is {{ correctAnswer }}</p>
         </div>
       </div>
-      <div>
-        <h5>{{ countdownValue }}</h5>
+      <div v-if="countdownValue > 0">
+        <div v-bind:style="timeBarStyle"></div>
       </div>
       <ul v-for="player in orderedScoreboard" v-bind:key="player.id">
         <li>{{ player.name }} {{ player.score }} {{ answerIndicator(player.answered_correctly) }}</li>
@@ -71,8 +73,10 @@ export default {
       clearInterval(this.activeTimer);
       this.activeTimer = setInterval(() => {
         const newValue = parseFloat(this.countdownValue - 0.01).toFixed(2);
-        if (newValue > 0) {
+        if (newValue >= 0) {
           this.countdownValue = newValue;
+        } else {
+          clearInterval(this.activeTimer);
         }
       }, 10);
     };
@@ -94,7 +98,9 @@ export default {
       }
       if (data.type === "correct_answer") {
         this.correctAnswer = data.value;
-        this.userIsCorrect = this.correctAnswer === this.answer;
+        if (this.answer) {
+          this.userIsCorrect = this.correctAnswer === this.answer;
+        }
       }
     };
   },
@@ -136,28 +142,36 @@ export default {
       const playerMap = Object.entries(this.players).map(([, val]) => val);
       return playerMap.sort((a, b) => b.score > a.score);
     },
+    timeBarStyle: function() {
+      return {
+        margin: '10px',
+        height: '30px',
+        width: `${(this.countdownValue/21)*100}%`,
+        background: 'white',
+      }
+    }
   }
 };
 </script>
 
 <style scoped>
-  button {
-    height: 100%;
-    min-height: 125px;
-    max-height: 200px;
-    width: 100%;
-    padding: 10px;
-  }
+button {
+  height: 100%;
+  min-height: 125px;
+  max-height: 200px;
+  width: 100%;
+  padding: 10px;
+}
 
-  .button {
-    margin: 10px;
-  }
+.button {
+  margin: 10px;
+}
 
-  .button-wrapper {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: 1fr;
-    grid-column-gap: 10px;
-    grid-row-gap: 10px;
-  }
+.button-wrapper {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 1fr;
+  grid-column-gap: 10px;
+  grid-row-gap: 10px;
+}
 </style>
