@@ -52,6 +52,7 @@ export default {
     countdownValue: 0,
     playerName: undefined,
     playerId: undefined,
+    serverTimeOffset: undefined,
     userIsCorrect: undefined,
     websocket: undefined,
     players: {}
@@ -69,7 +70,8 @@ export default {
       const currentTime = new Date(
         new Date().toLocaleString("en-US", { timeZone: "UTC" })
       );
-      this.countdownValue = (new Date(finishTime) - currentTime) / 1000;
+      const serverAdjustedTime = currentTime.setSeconds(currentTime.getSeconds() + this.serverTimeOffset);
+      this.countdownValue = (new Date(finishTime) - serverAdjustedTime) / 1000;
       clearInterval(this.activeTimer);
       this.activeTimer = setInterval(() => {
         const newValue = parseFloat(this.countdownValue - 0.01).toFixed(2);
@@ -81,7 +83,11 @@ export default {
       }, 10);
     };
 
-    this.websocket = new WebSocket("ws://127.0.0.1:8100");
+    this.websocket = new WebSocket("ws://192.168.0.116:8100");
+    const connectionTime = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "UTC" })
+    ).getTime() / 1000;
+
     this.websocket.onmessage = msg => {
       const data = JSON.parse(msg.data);
 
@@ -100,6 +106,10 @@ export default {
         if (this.answer) {
           this.userIsCorrect = this.correctAnswer === this.answer;
         }
+      }
+      if (data.type === "server_time") {
+        const serverTime = new Date(data.value).getTime() / 1000;
+        this.serverTimeOffset = serverTime - connectionTime;
       }
     };
   },
