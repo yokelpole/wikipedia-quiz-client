@@ -42,6 +42,8 @@
 </template>
 
 <script>
+import moment from "moment-timezone";
+
 export default {
   name: "Quiz",
   data: () => ({
@@ -70,7 +72,9 @@ export default {
       const currentTime = new Date(
         new Date().toLocaleString("en-US", { timeZone: "UTC" })
       );
-      const serverAdjustedTime = currentTime.setSeconds(currentTime.getSeconds() + this.serverTimeOffset);
+      const serverAdjustedTime = currentTime.setSeconds(
+        currentTime.getSeconds() + this.serverTimeOffset
+      );
       this.countdownValue = (new Date(finishTime) - serverAdjustedTime) / 1000;
       clearInterval(this.activeTimer);
       this.activeTimer = setInterval(() => {
@@ -84,9 +88,7 @@ export default {
     };
 
     this.websocket = new WebSocket("ws://192.168.0.116:8100");
-    const connectionTime = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "UTC" })
-    ).getTime() / 1000;
+    const connectionTime = moment().format('x') / 1000;
 
     this.websocket.onmessage = msg => {
       const data = JSON.parse(msg.data);
@@ -96,7 +98,8 @@ export default {
         startCountdownTimer(data.value.finish_time);
       }
       if (data.type === "player_registered" && !this.playerId) {
-        if (data.value.name === this.playerName) this.playerId = data.value.player_id;
+        if (data.value.name === this.playerName)
+          this.playerId = data.value.player_id;
       }
       if (data.type === "leaderboard_updated") {
         this.players = data.value;
@@ -108,8 +111,9 @@ export default {
         }
       }
       if (data.type === "server_time") {
-        const serverTime = new Date(data.value).getTime() / 1000;
-        this.serverTimeOffset = serverTime - connectionTime;
+        const clientTime = moment().tz("utc").format('x') / 1000;
+        const serverTime = moment.tz(data.value, "utc").format('x') / 1000;
+        this.serverTimeOffset = (serverTime - connectionTime) + (connectionTime - clientTime);
       }
     };
   },
@@ -140,9 +144,7 @@ export default {
     answerIndicator: function(answeredCorrectly) {
       if (answeredCorrectly === null) return;
 
-      return answeredCorrectly
-        ? '✅'
-        : '❌';
+      return answeredCorrectly ? "✅" : "❌";
     }
   },
   computed: {
@@ -152,11 +154,11 @@ export default {
     },
     timeBarStyle: function() {
       return {
-        margin: '10px',
-        height: '30px',
-        width: `${(this.countdownValue/21)*100}%`,
-        background: 'white',
-      }
+        margin: "10px",
+        height: "30px",
+        width: `${(this.countdownValue / 21) * 100}%`,
+        background: "white"
+      };
     }
   }
 };
