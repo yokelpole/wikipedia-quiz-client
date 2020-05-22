@@ -34,8 +34,8 @@
       <div v-if="countdownValue > 0">
         <div v-bind:style="timeBarStyle"></div>
       </div>
-      <ul v-for="player in orderedScoreboard" v-bind:key="player.id">
-        <li>{{ player.name }} {{ player.score }} {{ answerIndicator(player.answered_correctly) }}</li>
+      <ul>
+        <li v-for="player in orderedScoreboard" v-bind:key="player.id">{{ player.name }} {{ player.score }} {{ answerIndicator(player.answered_correctly) }}</li>
       </ul>
     </div>
   </div>
@@ -172,6 +172,10 @@ button {
 
 input {
   font-size: 32px;
+}
+
+ul {
+  list-style-type: none;
 }
 
 p#question {
