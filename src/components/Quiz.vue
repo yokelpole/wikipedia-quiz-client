@@ -16,7 +16,7 @@
     <div v-if="playerId">
       <h2>{{ activeQuestion.topic }}</h2>
       <h3>{{ activeQuestion.section }}</h3>
-      <p>{{ activeQuestion.question }}</p>
+      <p id="question">{{ activeQuestion.question }}</p>
       <div class="button-wrapper">
         <div class="button" v-for="(val) in activeQuestion.answers" v-bind:key="val">
           <button v-on:click="submitAnswer(val)" :disabled="answer || countdownValue <= 0">{{ val }}</button>
@@ -69,13 +69,9 @@ export default {
     };
 
     const startCountdownTimer = finishTime => {
-      const currentTime = new Date(
-        new Date().toLocaleString("en-US", { timeZone: "UTC" })
-      );
-      const serverAdjustedTime = currentTime.setSeconds(
-        currentTime.getSeconds() + this.serverTimeOffset
-      );
-      this.countdownValue = (new Date(finishTime) - serverAdjustedTime) / 1000;
+      const clientTime = moment().tz("utc").format('x') / 1000 + this.serverTimeOffset;
+      const serverTime = moment.tz(finishTime, "utc").format('x') / 1000;
+      this.countdownValue = serverTime - clientTime;
       clearInterval(this.activeTimer);
       this.activeTimer = setInterval(() => {
         const newValue = parseFloat(this.countdownValue - 0.01).toFixed(2);
@@ -166,11 +162,20 @@ export default {
 
 <style scoped>
 button {
+  font-size: 24px;
   height: 100%;
   min-height: 125px;
   max-height: 200px;
   width: 100%;
   padding: 10px;
+}
+
+input {
+  font-size: 32px;
+}
+
+p#question {
+  font-size: 24px;
 }
 
 .button {
